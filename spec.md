@@ -253,12 +253,16 @@ Upon success, the response MUST have a code of `202 Accepted`, and MUST include 
 Location: <blob-push-location>
 ```
 
-The `<blob-push-location>` MUST contain a UUID representing a unique session ID for the upload to follow.
-The `<blob-push-location>` does not necessarily need to be provided by the registry itself.
+Registries MUST support concurrent uploads from one or more clients, which is commonly implemented with a unique `<blob-push-location>` for each blob upload.
+
+The `<blob-push-location>` MAY be provided by a server other than the registry itself.
 In fact, offloading to another server can be a [better strategy](https://www.backblaze.com/blog/design-thinking-b2-apis-the-hidden-costs-of-s3-compatibility/).
 
-Optionally, the location MAY be absolute (containing the protocol and/or hostname), or it MAY be relative (containing just the URL path).
+The `<blob-push-location>` MAY be absolute (containing the protocol and/or hostname), or it MAY be relative (containing just the URL path).
 For more information, see [RFC 7231 (section 7.1.2)](https://www.rfc-editor.org/rfc/rfc7231#section-7.1.2).
+
+_Implementers note:_
+Registries commonly set `<blob-push-location>` to `/v2/<name>/blobs/uploads/<unique-id>`, where `<unique-id>` is a unique identifier.
 
 Once the `<blob-push-location>` has been obtained, perform the upload proper by making a `PUT` request to the following URL path, and with the following headers and body:
 
@@ -272,8 +276,8 @@ Content-Type: application/octet-stream
 ```
 
 The `<blob-push-location>` MAY contain critical query parameters.
-Additionally, it SHOULD match exactly the `<blob-push-location>` obtained from the `POST` request.
-It SHOULD NOT be assembled manually by clients except where absolute/relative conversion is necessary.
+Additionally, it MUST match exactly the `<blob-push-location>` obtained from the `POST` request.
+It MUST NOT be assembled manually by clients except where absolute/relative conversion is necessary.
 
 Here, `<digest>` is the digest of the blob being uploaded, and `<length>` is its size in bytes.
 
