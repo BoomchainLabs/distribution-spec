@@ -65,9 +65,20 @@ func runnerNew(c config) (*runner, error) {
 	if c.LoginUser != "" && c.LoginPass != "" {
 		apiOpts = append(apiOpts, apiWithAuth(c.LoginUser, c.LoginPass, c.CacheAuth))
 	}
+
+	// TODO <tianon> ideally we wouldn't just blatantly DisableCompression here, but we currently (2026-08-27) have a bunch of tests that assume Content-Length is set that Go's transparent handling of transport compression makes fail if a server happens to implement transport compression
+	client := &http.Client{}
+	if t, ok := http.DefaultTransport.(*http.Transport); ok {
+		transport := t.Clone()
+		transport.DisableCompression = true
+		client.Transport = transport
+	} else {
+		return nil, fmt.Errorf("changing the DefaultTransport is not supported")
+	}
+
 	r := runner{
 		Config:  c,
-		API:     apiNew(http.DefaultClient, apiOpts...),
+		API:     apiNew(client, apiOpts...),
 		State:   stateNew(),
 		Results: resultsNew(testName, nil),
 		Log:     slog.New(slog.NewTextHandler(c.LogWriter, &slog.HandlerOptions{Level: lvl})),
